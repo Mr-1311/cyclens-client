@@ -1,0 +1,46 @@
+* Libraries
+  - React Native
+    - react-native-camera
+
+* Communication Struct 
+  
+  clıent istenilen moduller icin surekli kontrol halindedir. 
+istek geldigi anda donen veriye gore o modul uygun cizim
+ yapilir ve hemen ardindan o modul icin gerekli image api ye
+gonderilir. moduller bagimsiz sekilde yada senkron sekilde (sonraki
+asama)...
+
+
+** REQUEST
+   1. Kontrol
+      - Çalıştırılan modüller için istek yapılmış mı kontrol edilir
+      - İstek gönderilmemiş API'a istek gönderilir
+** RESPONSE
+   1. API Handler
+   2. Kontrol
+   3. Processing
+      1. Pre-processing
+	 - Kameradan frame gider, framein hdr, constrat, histogram
+           kalitesine bakilir, bu kaliteye gore bazi moduller (yas,
+           cinsiyet) calisir veya calismaz
+	 - Eger frame kalitesi kotu ise: 
+	   Histogram gragfigi tekrar en iyi sekilde
+           duzenlenir. Mumkunse HDR kalitesi ayarlanir, isik
+           patlamalarini ve karankik yerleri aydinlatmak icin
+           konstrat ayarlari tekrar en iyi sekilde yapilandirilir.
+	 - Main frame bu asamada, moduller icin insanlarin kafasi
+           kalacak sekilde belirli bir margin ve tolarance degerine
+           gore kesilir(?)    
+      2. Processing
+	 - Yas ve cinsiyet modulleri icin en iyi frame bulunasiya
+           kadar calisitirilir. Ama post-processing e atilmaz. Belirli
+           bir sayida en iyi olan frameler islendiktan sonra, frame
+           kalitesine gore ortalamasi alinir ve post-processing e
+           atilir. Bu islem birkac defa yapilabilir. Optimizasyonu
+           arttirmak icin surekli calismayacaklar.
+	 - 
+      3. Post-process
+	 - Eger yeni gelen veri, onceki verilen tolerans degerinden
+           (module bagli yas, cinsiyet, vb icin ozel kesinlik sistemi)
+           daha buyuk olup, gerekeni karsilamiyorsa, API ye yeni veri
+           yollanmaz, gelen diger framei bekleriz.
