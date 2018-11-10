@@ -38,9 +38,14 @@ asama)...
            kalitesine gore ortalamasi alinir ve post-processing e
            atilir. Bu islem birkac defa yapilabilir. Optimizasyonu
            arttirmak icin surekli calismayacaklar.
-	 - 
+      - Yas ve cinsiyet hesaplanırken, birkaç saniye ve frame boyunca pre-process'de farklı filtre ve işlemlerden geçilir. Ortalaması alınarak, verilecek değer hakkında sonuç edilmeye çalışılır. 
+      Eğer Process sonraı, değerler arasındaki tolerans farkı (örn. 0.2) den az ise, tekrar pre-process aşamasına gönderilip farklı filterler ile işler ve client'den yeni frame gelmesini de bekler.
+      Tolerans farkı karşılanmadığı sürece, değer client'e gönderilmez. Tolerans farkı ilk frame'de karşılansa bile, kesin sonuca yaklaşabilmek için birkaç saniye ve frame boyunca pre-process'de 
+      farklı filtrelerden geçilirmesi gerekmektedir.
+      
       3. Post-process
 	 - Eger yeni gelen veri, onceki verilen tolerans degerinden
            (module bagli yas, cinsiyet, vb icin ozel kesinlik sistemi)
            daha buyuk olup, gerekeni karsilamiyorsa, API ye yeni veri
            yollanmaz, gelen diger framei bekleriz.
+
