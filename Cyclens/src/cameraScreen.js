@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Slider } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Slider, Button } from 'react-native';
 import { RNCamera } from 'react-native-camera';
 import PostImage from './api/request';
 import axios from 'axios';
@@ -53,10 +53,10 @@ export default class CameraScreen extends React.Component {
     takePicture = async function() {
         if (this.camera) {
             this.camera.takePictureAsync().then(frame => {
-                const URL = "https://localhost:5000";
+                const URL = 'http://10.0.2.2:5000/api/v1/demo';
 
                 console.log('-------------------------------------------------------------');
-
+                PostImage(frame.uri);
 /*
                 const data = new FormData();
                 //data.append('id', 'id apa saja'); // you can append anyone.
@@ -78,19 +78,38 @@ export default class CameraScreen extends React.Component {
                                   loading : false
                               });
                           });
-*/                
+
+              
 
                 console.log('gercek yol: ', frame.uri);
                 frameUri = frame.uri;
                 var res = frameUri.replace("file://", "file=@");
                 console.log('gidecek yol: ', res);
+
+                var photo = {
+                    uri: res,
+                    type: 'image/jpeg',
+                    name: 'photo.jpg',
+                };
+
+                var body = new FormData();
+                body.append('photo', photo);
+                body.append('title', 'A beautiful photo!');
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', URL);
+                xhr.send(body);
+
+
+
+
                 
                 const data = new FormData();
-                data.append('name', 'file'); // you can append anyone.
+                data.append("name", "file"); // you can append anyone.
                 data.append('file', {
-                    uri: frameUri,
-                    type: 'image/jpeg', // or photo.type
-                    name: 'testPhotoName'
+                    uri: res,
+                    type: "image/jpeg", // or photo.type
+                    name: "file"
                 });
                 fetch(URL, {
                     method: 'post',
@@ -101,17 +120,27 @@ export default class CameraScreen extends React.Component {
                     console.log('hata olustu: ',err);
                 });
 
-
-                
+               
                 console.log('-------------------------------------------------------------');
 
-                //PostImage(res, data);
+                fetch(URL, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        firstParam: 'yourValue',
+                        secondParam: 'yourOtherValue',
+                    }),
+                });
+*/                
   
             });
         }            
     }
 
-
+    
     onFacesDetected = ({ faces }) => this.setState({ faces });
     onFaceDetectionError = state => console.warn('Faces detection error:', state);
 
@@ -186,7 +215,9 @@ export default class CameraScreen extends React.Component {
     }
 
     render() {
-        return <View style={styles.container}>{this.renderCamera()}</View>;
+        return <View style={styles.container}>
+                 {this.renderCamera()}
+               </View>;
     }
 }
 

@@ -2,25 +2,37 @@ import React, { Component } from 'react';
 import axios from 'axios';
 
 
-export default PostImage = (imageUri, d) => {
-    baseURL = 'http://localhost:5000/api/v1/demo';
+export default PostImage = (imageUri) => {
+    baseURL = 'http://10.0.2.2:5000/api/v1/demo';
+//    baseURL = 'http://192.168.43.143:5000/api/v1/demo';
 
-    console.log('denemeejflsd');
-    
-    var formData = new FormData();
-    formData.append("file", {
+    file = {
         uri: imageUri,
+        name: "image.jpg",
         type: "image/jpg"
-    });
+    };
 
-    axios.post(baseURL, d)
+    const body = new FormData();
+    body.append('file', file);
+
+    axios.post(baseURL, body)
         .then(function (response) {
-            console.log('response: ', response);
+            console.log('basarili: ', response);
         })
         .catch(function (error) {
             console.log('hata oldu: ', error);
         })
         .then(function () {
-            console.log('ksdkaflkasdjflasdjflkasdjfl sdlfsdlkfj');
+            console.log('<-------------------------->');
         });
+
+    
+    /*
+
+      fetch(baseURL, {
+      method: 'POST',
+      body
+      }).then(function(res){ console.log(res); });
+    */
+
 };
