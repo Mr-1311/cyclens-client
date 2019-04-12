@@ -1,12 +1,23 @@
+
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Slider, Button } from 'react-native';
 import { RNCamera } from 'react-native-camera';
-import PostImage from './api/request';
+import { PostImage, RequestEmotion, RequestGender, RequestAge } from './api/request';
+import ModuleCard from './moduleCard.js';
+
 import axios from 'axios';
 
 const landmarkSize = 2;
 
-export default class CameraScreen extends React.Component {
+const moduleStatus = {
+    AVALIABLE: 0,
+    WAITING: 1,
+    DISABLE: 2
+};
+
+class CameraScreen extends React.Component {
+    
+
     state = {
         autoFocus: 'on',
         depth: 0,
@@ -23,8 +34,112 @@ export default class CameraScreen extends React.Component {
             maxDuration: 5,
             quality: RNCamera.Constants.VideoQuality["288p"],
         },
-        isRecording: false
+        isRecording: false,
+        isCyclensActive: true,
+        emotionStatus: moduleStatus.AVALIABLE,
+        emotionResult: 'empty',
+        emotionConfidence: '-1',
+        genderStatus: moduleStatus.AVALIABLE,
+        genderResult: 'empty',
+        genderConfidence: '-1',
+        ageStatus: moduleStatus.AVALIABLE,
+        ageResult: 'empty',
+        ageConfidence: '-1',
+        temp: false
     };
+
+    componentDidUpdate() {
+        this.cyclens();
+    }
+
+    cyclens = async () => {
+
+        if (this.state.emotionStatus === moduleStatus.AVALIABLE
+            && this.state.genderStatus === moduleStatus.AVALIABLE
+            && this.state.ageStatus === moduleStatus.AVALIABLE)
+        {
+            this.setState({emotionStatus: moduleStatus.WAITING});
+            this.setState({genderStatus: moduleStatus.WAITING});
+            this.setState({ageStatus: moduleStatus.WAITING});
+            if (this.camera) {
+                this.camera.takePictureAsync().then(frame => {
+                    RequestEmotion(frame.uri, this.changeEmotionStatus2Avaliable, this.changeEmotionRes);
+                    RequestGender(frame.uri, this.changeGenderStatus2Avaliable, this.changeGenderRes);
+                    RequestAge(frame.uri, this.changeAgeStatus2Avaliable, this.changeAgeRes);
+                });
+            }
+        }
+
+
+        
+        if (this.state.emotionStatus === moduleStatus.AVALIABLE) {
+            
+            this.setState({emotionStatus: moduleStatus.WAITING});
+            if (this.camera) {
+                this.camera.takePictureAsync().then(frame => {
+                    RequestEmotion(frame.uri, this.changeEmotionStatus2Avaliable, this.changeEmotionRes);
+                });
+            }
+        }
+
+        if (this.state.genderStatus === moduleStatus.AVALIABLE) {
+            
+            this.setState({genderStatus: moduleStatus.WAITING});
+            if (this.camera) {
+                this.camera.takePictureAsync().then(frame => {
+                    RequestGender(frame.uri, this.changeGenderStatus2Avaliable, this.changeGenderRes);
+                });
+            }
+        }
+
+        if (this.state.ageStatus === moduleStatus.AVALIABLE) {
+            
+            this.setState({ageStatus: moduleStatus.WAITING});
+            if (this.camera) {
+                this.camera.takePictureAsync().then(frame => {
+                    RequestAge(frame.uri, this.changeAgeStatus2Avaliable, this.changeAgeRes);
+                });
+            }
+        }
+
+    }
+
+    changeEmotionStatus2Avaliable = () => {
+        this.setState({emotionStatus: moduleStatus.AVALIABLE});
+    }
+    changeGenderStatus2Avaliable = () => {
+        this.setState({genderStatus: moduleStatus.AVALIABLE});
+    }
+    changeAgeStatus2Avaliable = () => {
+        this.setState({ageStatus: moduleStatus.AVALIABLE});
+    }
+    
+
+    changeEmotionRes = (res, conf) => {
+        this.setState({emotionResult: res});
+        this.setState({emotionConfidence: conf});
+    }
+    changeGenderRes = (res, conf) => {
+        this.setState({genderResult: res});
+        this.setState({genderConfidence: conf});
+    }
+    changeAgeRes = (res, conf) => {
+        this.setState({ageResult: res});
+        this.setState({ageConfidence: conf});
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    
 
     getRatios = async function() {
         const ratios = await this.camera.getSupportedRatios();
@@ -56,89 +171,22 @@ export default class CameraScreen extends React.Component {
                 const URL = 'http://10.0.2.2:5000/api/v1/demo';
 
                 console.log('-------------------------------------------------------------');
-                PostImage(frame.uri);
-/*
-                const data = new FormData();
-                //data.append('id', 'id apa saja'); // you can append anyone.
-                data.append('fileToUpload', {
-                    uri: res,
-                    type: 'image/jpeg',
-                    name: 'file',
-                });
+                //PostImage(frame.uri);
+                RequestEmotion(frame.uri, this.changeModuleStatus2Avaliable);
 
-                fetch(URL, {
-                    method: 'post',
-                    body: data
-                })
-                    .then((response) => response.json())
-                    .then((responseJson) =>
-                          {
-                              console.log(responseJson);
-                              this.setState  ({
-                                  loading : false
-                              });
-                          });
-
-              
-
-                console.log('gercek yol: ', frame.uri);
-                frameUri = frame.uri;
-                var res = frameUri.replace("file://", "file=@");
-                console.log('gidecek yol: ', res);
-
-                var photo = {
-                    uri: res,
-                    type: 'image/jpeg',
-                    name: 'photo.jpg',
-                };
-
-                var body = new FormData();
-                body.append('photo', photo);
-                body.append('title', 'A beautiful photo!');
-
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST', URL);
-                xhr.send(body);
-
-
-
-
-                
-                const data = new FormData();
-                data.append("name", "file"); // you can append anyone.
-                data.append('file', {
-                    uri: res,
-                    type: "image/jpeg", // or photo.type
-                    name: "file"
-                });
-                fetch(URL, {
-                    method: 'post',
-                    body: data
-                }).then(res => {
-                    console.log(res);
-                }).catch(err => {
-                    console.log('hata olustu: ',err);
-                });
-
-               
-                console.log('-------------------------------------------------------------');
-
-                fetch(URL, {
-                    method: 'POST',
-                    headers: {
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        firstParam: 'yourValue',
-                        secondParam: 'yourOtherValue',
-                    }),
-                });
-*/                
-  
             });
         }            
     }
+
+    getImage = async () => {
+        if (this.camera) {
+            this.camera.takePictureAsync().then(frame => {
+                return frame.uri;
+            });
+        }
+    }
+    
+    
 
     
     onFacesDetected = ({ faces }) => this.setState({ faces });
@@ -160,7 +208,6 @@ export default class CameraScreen extends React.Component {
                   },
               ]}
             >
-              <Text style={styles.faceText}>ID: {faceID}</Text>
             </View>
         );
     }
@@ -168,7 +215,7 @@ export default class CameraScreen extends React.Component {
     renderFaces() {
         return (
             <View style={styles.facesContainer} pointerEvents="none">
-              {this.state.faces.map(this.renderFace)}
+              {this.state.faces.map(this.renderFace)}                  
             </View>
         );
     }
@@ -188,9 +235,10 @@ export default class CameraScreen extends React.Component {
               flashMode={this.state.flash}
               autoFocus={this.state.autoFocus}
               ratio={this.state.ratio}
-              faceDetectionLandmarks={RNCamera.Constants.FaceDetection.Landmarks.all}
+              faceDetectionLandmarks={RNCamera.Constants.FaceDetection.Landmarks.none}
               onFacesDetected={this.onFacesDetected}
               onFaceDetectionError={this.onFaceDetectionError}
+              faceDetectionMode={RNCamera.Constants.FaceDetection.Mode.fast}
               focusDepth={this.state.depth}
               permissionDialogTitle={'Permission to use camera'}
               permissionDialogMessage={'We need your permission to use your camera phone'}
@@ -203,20 +251,28 @@ export default class CameraScreen extends React.Component {
                     backgroundColor: 'transparent',
                 }}
               >
-                <TouchableOpacity
-                  style={styles.button}
-                  onPress={this.takePicture.bind(this)}
-                >
-                  <Text style={styles.flipText}> SNAP </Text>
-                </TouchableOpacity>
               </View>
             </RNCamera>
         );
     }
 
+
+    onPressLearnMore = () => {
+        this.setState({temp: !this.state.temp});
+        this.cyclens();
+    }
+    
     render() {
         return <View style={styles.container}>
+                 
                  {this.renderCamera()}
+
+                 <View style={styles.moduleContainer}>
+                   <ModuleCard title="Emotion" result={this.state.emotionResult} confidence={this.state.emotionConfidence}/>
+                   <ModuleCard title="Gender" result={this.state.genderResult} confidence={this.state.genderConfidence}/>
+                   <ModuleCard title="Age" result={this.state.ageResult} confidence={this.state.ageConfidence}/>
+                 </View>
+                 
                </View>;
     }
 }
@@ -224,7 +280,12 @@ export default class CameraScreen extends React.Component {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         backgroundColor: '#000',
+    },
+    moduleContainer: {
+        
     },
     cameraLayout: {
         flex: 1,
@@ -281,3 +342,5 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
     },
 });
+
+export default CameraScreen;

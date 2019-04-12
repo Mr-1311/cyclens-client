@@ -7,13 +7,13 @@ import CameraScreen from './src/cameraScreen.js';
 
 export default class App extends Component<Props> {
     
-  render() {
-    return (
-        <View style={styles.container}>
-          <CameraScreen/>
-        </View>
-    );
-  }
+    render() {
+        return (
+            <View style={styles.container}>
+              <CameraScreen/>
+            </View>
+        );
+    }
 
     
     
