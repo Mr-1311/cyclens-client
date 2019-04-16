@@ -6,9 +6,23 @@ import ROUTE_EMOTION from './routes.js';
 import ROUTE_GENDER from './routes.js';
 
 
-const RequestEmotion = (imageUri, setModuleAvailable, sendResults) => {
-    url = "http://192.168.43.143:5000/api/v1/demo/emotion";
+const ip = '192.168.1.43';
 
+const ENUM_MODULE_NAMES = {
+    emotion: 'emotion',
+    gender: 'gender',
+    age: 'age',
+    face: 'face'
+};
+
+const ENUM_MODULE_STATUS = {
+    emotion: 'emotionStatus',
+    gender: 'genderStatus',
+    age: 'ageStatus',
+    face: 'faceStatus'
+};
+
+let makeFormData = (imageUri) => {
     file = {
         uri: imageUri,
         name: "image.jpg",
@@ -18,14 +32,22 @@ const RequestEmotion = (imageUri, setModuleAvailable, sendResults) => {
     const body = new FormData();
     body.append('file', file);
 
-    axios.post(url, body)
+    return body;
+};
+
+const RequestEmotion = (imageUri, setModuleAvailable, sendResults, ip) => {
+    url = "http://"+ ip +":5000/api/v1/demo/emotion";
+
+    formData = makeFormData(imageUri);
+
+    axios.post(url, formData)
         .then(function (response) {
             console.log('RESPONSE::REQUEST-EMOTION: ', response);
             if (response.data.success == true){
-                sendResults(response.data.faces[0].result, response.data.faces[0].confidence);
+                sendResults(ENUM_MODULE_NAMES.emotion, response.data.faces[0].result, response.data.faces[0].confidence, response.data.process.total);
             }
             else{
-                sendResults("face lost!!", "-1");
+                sendResults(ENUM_MODULE_NAMES.emotion, "face lost!!", "-1", '-1');
             }
         })
         .catch(function (error) {
@@ -33,31 +55,24 @@ const RequestEmotion = (imageUri, setModuleAvailable, sendResults) => {
         })
         .then(function () {
             console.log('END::REQUEST-EMOTION');
-            setModuleAvailable();
+            setModuleAvailable(ENUM_MODULE_STATUS.emotion);
         });
 
 };
 
-const RequestGender = (imageUri, setModuleAvailable, sendResults) => {
-    url = "http://192.168.43.143:5000/api/v1/demo/gender";
+const RequestGender = (imageUri, setModuleAvailable, sendResults, ip) => {
+    url = "http://"+ ip +":5000/api/v1/demo/gender";
 
-    file = {
-        uri: imageUri,
-        name: "image.jpg",
-        type: "image/jpg"
-    };
-
-    const body = new FormData();
-    body.append('file', file);
-
-    axios.post(url, body)
+    formData = makeFormData(imageUri);
+    
+    axios.post(url, formData)
         .then(function (response) {
             console.log('RESPONSE::REQUEST-GENDER: ', response);
             if (response.data.success == true){
-                sendResults(response.data.faces[0].result, response.data.faces[0].confidence);
+                sendResults(ENUM_MODULE_NAMES.gender, response.data.faces[0].result, response.data.faces[0].confidence, response.data.process.total);
             }
             else{
-                sendResults("face lost!!", "-1");
+                sendResults(ENUM_MODULE_NAMES.gender, "face lost!!", "-1", '-1');
             }
         })
         .catch(function (error) {
@@ -65,13 +80,40 @@ const RequestGender = (imageUri, setModuleAvailable, sendResults) => {
         })
         .then(function () {
             console.log('END::REQUEST-GENDER');
-            setModuleAvailable();
+            setModuleAvailable(ENUM_MODULE_STATUS.gender);
         });
 
 };
 
-const RequestAge = (imageUri, setModuleAvailable, sendResults) => {
-    url = "http://192.168.43.143:5000/api/v1/demo/age";
+const RequestAge = (imageUri, setModuleAvailable, sendResults, ip) => {
+    url = "http://"+ ip +":5000/api/v1/demo/age";
+
+    formData = makeFormData(imageUri);
+    
+    axios.post(url, formData)
+        .then(function (response) {
+            console.log('RESPONSE::REQUEST-AGE: ', response);
+            if (response.data.success == true){
+                sendResults(ENUM_MODULE_NAMES.age, response.data.faces[0].result, response.data.faces[0].confidence, response.data.process.total);
+            }
+            else{
+                sendResults(ENUM_MODULE_NAMES.age, "face lost!!", "-1", '-1');
+            }
+        })
+        .catch(function (error) {
+            console.log('ERROR::REQUEST-AGE: ', error);
+        })
+        .then(function () {
+            console.log('END::REQUEST-AGE');
+            setModuleAvailable(ENUM_MODULE_STATUS.age);
+        });
+
+};
+
+
+
+const RequestFaceAdd = (imageUri, setModuleAvailable, sendResults, ip) => {
+    url = "http://"+ ip +":5000/api/v1/demo/face_add";
 
     file = {
         uri: imageUri,
@@ -84,24 +126,55 @@ const RequestAge = (imageUri, setModuleAvailable, sendResults) => {
 
     axios.post(url, body)
         .then(function (response) {
-            console.log('RESPONSE::REQUEST-AGE: ', response);
+            console.log('RESPONSE::REQUEST-ADD_FACE: ', response);
             if (response.data.success == true){
-                sendResults(response.data.faces[0].result, response.data.faces[0].confidence);
+                //sendResults(response.data.faces[0].result, response.data.faces[0].confidence, response.data.process.total);
             }
             else{
-                sendResults("face lost!!", "-1");
+//                sendResults("face lost!!", "-1");
             }
         })
         .catch(function (error) {
-            console.log('ERROR::REQUEST-AGE: ', error);
+            console.log('ERROR::REQUEST-ADD_FACE: ', error);
         })
         .then(function () {
-            console.log('END::REQUEST-AGE');
-            setModuleAvailable();
+            console.log('END::REQUEST-ADD_FACE');
+  //          setModuleAvailable();
         });
 
 };
 
+const RequestFace = (imageUri, setModuleAvailable, sendResults, ip) => {
+    url = "http://"+ ip +":5000/api/v1/demo/face";
+
+    file = {
+        uri: imageUri,
+        name: "image.jpg",
+        type: "image/jpg"
+    };
+
+    const body = new FormData();
+    body.append('file', file);
+
+    axios.post(url, body)
+        .then(function (response) {
+            console.log('RESPONSE::REQUEST-FACE: ', response);
+            if (response.data.success == true){
+                sendResults(ENUM_MODULE_NAMES.face, response.data.faces[0].result, response.data.faces[0].confidence, response.data.process.total);
+            }
+            else{
+                sendResults(ENUM_MODULE_NAMES.face, "face lost!!", "-1", '-1');
+            }
+        })
+        .catch(function (error) {
+            console.log('ERROR::REQUEST-FACE: ', error);
+        })
+        .then(function () {
+            console.log('END::REQUEST-FACE');
+            setModuleAvailable(ENUM_MODULE_STATUS.face);
+        });
+
+};
 
 
 const PostImage = (imageUri) => {
@@ -139,5 +212,5 @@ const PostImage = (imageUri) => {
 
 };
 
-export {RequestEmotion, RequestGender, RequestAge, PostImage}
+export { RequestEmotion, RequestGender, RequestAge, RequestFace, RequestFaceAdd, PostImage }
 

@@ -6,7 +6,8 @@ const ModuleCard = (props) => {
         <View style={ styles.container }>
           <Text style={ styles.title }>{props.title}</Text>
           <Text style={ styles.text }>{props.result}</Text>
-          <Text style={ styles.text }>{props.confidence}</Text>
+          <Text style={ styles.text }>confidence: {props.confidence}</Text>
+          <Text style={ styles.text }>process ms: {props.processTime}</Text>
         </View>
     );
 };
@@ -20,18 +21,18 @@ const styles = StyleSheet.create({
         alignItems: 'flex-end',
         //alignSelf: 'stretch',
         //width: '80%',
-        margin: 10,
-        padding: 10
+        margin: 5,
+        padding: 5
     },
     title: {
         color: '#09a55f',
         fontWeight: 'bold',
-        fontSize: 22
+        fontSize: 20
     },
     text: {
         color: '#fff',
         fontWeight: 'normal',
-        fontSize: 16
+        fontSize: 14
     }
 });
 
