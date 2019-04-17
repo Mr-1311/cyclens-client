@@ -1,4 +1,5 @@
 const API_PATH = {
+    PING: "/api/v1/demo/ping",
     AGE: "/api/v1/demo/age",
     EMOTION: "/api/v1/demo/emotion",
     FACE: "/api/v1/demo/face",

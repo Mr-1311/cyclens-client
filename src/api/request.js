@@ -48,7 +48,9 @@ let getModuleStatusForType = (type) => {
 };
 
 getModuleApiPathForType = (type) => {
-    if (type === ENUM_MODULE_NAMES.age){
+    if (type === ENUM_MODULE_NAMES.ping){
+        return API_PATH.PING;
+    } else if (type === ENUM_MODULE_NAMES.age){
         return API_PATH.AGE;
     } else if (type === ENUM_MODULE_NAMES.emotion){
         return API_PATH.EMOTION;
@@ -60,6 +62,27 @@ getModuleApiPathForType = (type) => {
         return API_PATH.GENDER;
     }
     return null;
+};
+
+const RequestPing = (ip, sendPingResult) => {
+    URL = "http://" + ip + ":5000" + this.getModuleApiPathForType(ENUM_MODULE_NAMES.ping);
+
+    axios.get(URL)
+        .then(function (response) {
+            console.log('[RequestPing::RESPONSE]: Result: ', response);
+            if (response.data.result == 'pong'){
+                sendPingResult(true);
+            }
+            else{
+                sendPingResult(false);
+            }
+        })
+        .catch(function (error) {
+            console.log('[RequestPing::RESPONSE]: Result: ', error);
+        })
+        .then(function () {
+            console.log('[RequestPing::RESPONSE]: Result: END');
+        });
 };
 
 const RequestModule = (moduleType, ip, imageUri, setModuleAvailable, sendResults) => {
@@ -109,4 +132,4 @@ const PostImage = (imageUri) => {
 };
 
 export default ENUM_MODULE_NAMES;
-export { RequestModule, PostImage }
+export { RequestModule, RequestPing, PostImage }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Slider, Button, TextInput } from 'react-native';
 import { RNCamera } from 'react-native-camera';
-import { PostImage, RequestModule } from './api/request';
+import { PostImage, RequestPing, RequestModule } from './api/request';
 import ENUM_MODULE_NAMES from './api/request';
 import ModuleCard from './moduleCard.js';
 import SettingsScreen from './pages/setting.js';
@@ -68,10 +68,27 @@ class CameraScreen extends React.Component {
         faceProcessTime: '-1',
         labelCurrentStatus: labelStatus.AVAILABLE,
         btnLabelText: 'label',
-        btnEngineText: 'START',
+        btnEngineText: 'WAITING',
+        btnEngineDisabled: false,
+        serverPing: false,
         temp: false,
         text: ''
     };
+
+    componentDidMount() {
+        setInterval(() => {
+            RequestPing(this.state.ipAdress, this.changePing);
+            if(!this.state.serverPing){
+                this.setState({btnEngineText: 'WAITING'});
+            } else {
+                if(this.state.isCyclensActive){
+                    this.setState({btnEngineText: 'STOP'});
+                } else  {
+                    this.setState({btnEngineText: 'START'});
+                }
+            }
+        }, 3000);
+    }
 
     componentDidUpdate() {
         this.LOOP();
@@ -81,6 +98,7 @@ class CameraScreen extends React.Component {
     LOOP = async () => {
 
         if (this.state.isCyclensActive
+            && this.state.serverPing === true
             && this.state.emotionStatus === moduleStatus.AVAILABLE
             && this.state.genderStatus === moduleStatus.AVAILABLE
             && this.state.ageStatus === moduleStatus.AVAILABLE
@@ -107,6 +125,10 @@ class CameraScreen extends React.Component {
 
     changeStatus2Available = ( module ) => {
         this.setState({[module]: moduleStatus.AVAILABLE});
+    }
+
+    changePing = ( result ) => {
+        this.setState({serverPing: result});
     }
 
     changeRes = ( moduleName , res, conf, processTime ) => {
@@ -274,6 +296,10 @@ class CameraScreen extends React.Component {
     }
 
     onCyclensToggle = () => {
+        if(!this.state.serverPing){
+            return;
+        }
+
         if(this.state.isCyclensActive){
             this.setState({isCyclensActive: false});
             this.setState({btnEngineText: 'START'});
