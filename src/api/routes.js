@@ -1,4 +1,9 @@
-export const BASE_IP = "http://10.0.2.2:5000";
+const API_PATH = {
+    AGE: "/api/v1/demo/age",
+    EMOTION: "/api/v1/demo/emotion",
+    FACE: "/api/v1/demo/face",
+    FACE_ADD: "/api/v1/demo/face_add",
+    GENDER: "/api/v1/demo/gender",
+};
 
-export const ROUTE_EMOTION= "/api/v1/demo/emotion";
-export const ROUTE_GENDER= "/api/v1/demo/gender";
+export default API_PATH;

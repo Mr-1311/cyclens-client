@@ -12,6 +12,7 @@
     "@babel/plugin-transform-flow-strip-types": "^7.0.0",
     "axios": "^0.18.0",
     "babel-preset-react-native": "^4.0.1",
+    "is-ip": "^3.0.0",
     "mobx": "^5.9.4",
     "mobx-react": "^5.4.3",
     "react": "16.6.1",

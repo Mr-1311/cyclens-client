@@ -1,13 +1,25 @@
+const isIp = require('is-ip');
+
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Slider, Button, TextInput } from 'react-native';
 
 class SettingsScreen extends React.Component {
 
-    state = { text: '' };
+    state = {
+        ip: this.props.getIpAddress,
+        btnChangeIpDisabled: true,
+    };
 
-    press = () => {
-        this.props.onChangeIpPress(this.state.text);
-        this.setState({text: ''});
+    onButtonChangeIpPressed = () =>{
+        this.props.onButtonChangeIpPressed(this.state.ip);
+        this.props.onGoBackPressed();
+    }
+
+    onTextChanged = (text) => {
+        if (isIp(text)) {
+            this.setState({btnChangeIpDisabled: false});
+        }
+        this.setState({ip: text});
     }
 
     render() {
@@ -16,23 +28,23 @@ class SettingsScreen extends React.Component {
               <View>
                 <TextInput
                   style={{height: 40, borderColor: 'gray', borderWidth: 1}}
-                  placeholder='ip address'
-                  onChangeText={(text) => this.setState({text})}
-                  value={this.state.text}
+                  placeholder='IP Address'
+                  onChangeText={(text) => this.onTextChanged(text)}
+                  value={this.state.ip}
                 />
                 <Button
-                  title='change ip'
-                  onPress={this.press}
+                  title='CHANGE'
+                  disabled={this.state.btnChangeIpDisabled}
+                  onPress={this.onButtonChangeIpPressed}
                 />
               </View>
 
               <Button
-                title='go back'
+                title='BACK'
                 onPress={this.props.onGoBackPressed}
               />
             </View>
         );
-        
     }
 };
 

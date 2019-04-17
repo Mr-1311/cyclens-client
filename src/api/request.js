@@ -1,25 +1,22 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 
-import BASE_IP from './routes.js';
-import ROUTE_EMOTION from './routes.js';
-import ROUTE_GENDER from './routes.js';
-
-
-const ip = '192.168.1.43';
+import API_PATH from './routes';
 
 const ENUM_MODULE_NAMES = {
-    emotion: 'emotion',
-    gender: 'gender',
     age: 'age',
-    face: 'face'
+    emotion: 'emotion',
+    face: 'face',
+    face_add: 'face_add',
+    gender: 'gender'
 };
 
 const ENUM_MODULE_STATUS = {
-    emotion: 'emotionStatus',
-    gender: 'genderStatus',
     age: 'ageStatus',
-    face: 'faceStatus'
+    emotion: 'emotionStatus',
+    face: 'faceStatus',
+    face_add: 'faceAddStatus',
+    gender: 'genderStatus'
 };
 
 let makeFormData = (imageUri) => {
@@ -35,182 +32,81 @@ let makeFormData = (imageUri) => {
     return body;
 };
 
-const RequestEmotion = (imageUri, setModuleAvailable, sendResults, ip) => {
-    url = "http://"+ ip +":5000/api/v1/demo/emotion";
+let getModuleStatusForType = (type) => {
+    if (type === ENUM_MODULE_NAMES.age){
+        return ENUM_MODULE_STATUS.age;
+    } else if (type === ENUM_MODULE_NAMES.emotion){
+        return ENUM_MODULE_STATUS.emotion;
+    } else if (type === ENUM_MODULE_NAMES.face){
+        return ENUM_MODULE_STATUS.face;
+    } else if (type === ENUM_MODULE_NAMES.face_add){
+        return ENUM_MODULE_STATUS.face_add;
+    } else if (type === ENUM_MODULE_NAMES.gender){
+        return ENUM_MODULE_STATUS.gender;
+    }
+    return null;
+};
+
+getModuleApiPathForType = (type) => {
+    if (type === ENUM_MODULE_NAMES.age){
+        return API_PATH.AGE;
+    } else if (type === ENUM_MODULE_NAMES.emotion){
+        return API_PATH.EMOTION;
+    } else if (type === ENUM_MODULE_NAMES.face){
+        return API_PATH.FACE;
+    } else if (type === ENUM_MODULE_NAMES.face_add){
+        return API_PATH.FACE_ADD;
+    } else if (type === ENUM_MODULE_NAMES.gender){
+        return API_PATH.GENDER;
+    }
+    return null;
+};
+
+const RequestModule = (moduleType, ip, imageUri, setModuleAvailable, sendResults) => {
+    URL = "http://" + ip + ":5000" + this.getModuleApiPathForType(moduleType);
+
+    if (URL === null) {
+        return;
+    }
 
     formData = makeFormData(imageUri);
 
-    axios.post(url, formData)
+    axios.post(URL, formData)
         .then(function (response) {
-            console.log('RESPONSE::REQUEST-EMOTION: ', response);
+            console.log('[RequestModule::RESPONSE]: Type: ', moduleType, 'Result: ', response);
             if (response.data.success == true){
-                sendResults(ENUM_MODULE_NAMES.emotion, response.data.faces[0].result, response.data.faces[0].confidence, response.data.process.total);
+                sendResults(moduleType, response.data.faces[0].result, response.data.faces[0].confidence, response.data.process.total);
             }
             else{
-                sendResults(ENUM_MODULE_NAMES.emotion, "face lost!!", "-1", '-1');
+                sendResults(moduleType, "Face Lost", "-1", '-1');
             }
         })
         .catch(function (error) {
-            console.log('ERROR::REQUEST-EMOTION: ', error);
+            console.log('[RequestModule::RESPONSE]: Type: ', moduleType, 'Result: ', error);
         })
         .then(function () {
-            console.log('END::REQUEST-EMOTION');
-            setModuleAvailable(ENUM_MODULE_STATUS.emotion);
+            console.log('[RequestModule::RESPONSE]: Type: ', moduleType, 'Result: END');
+            setModuleAvailable(getModuleStatusForType(moduleType));
         });
-
 };
-
-const RequestGender = (imageUri, setModuleAvailable, sendResults, ip) => {
-    url = "http://"+ ip +":5000/api/v1/demo/gender";
-
-    formData = makeFormData(imageUri);
-    
-    axios.post(url, formData)
-        .then(function (response) {
-            console.log('RESPONSE::REQUEST-GENDER: ', response);
-            if (response.data.success == true){
-                sendResults(ENUM_MODULE_NAMES.gender, response.data.faces[0].result, response.data.faces[0].confidence, response.data.process.total);
-            }
-            else{
-                sendResults(ENUM_MODULE_NAMES.gender, "face lost!!", "-1", '-1');
-            }
-        })
-        .catch(function (error) {
-            console.log('ERROR::REQUEST-GENDER: ', error);
-        })
-        .then(function () {
-            console.log('END::REQUEST-GENDER');
-            setModuleAvailable(ENUM_MODULE_STATUS.gender);
-        });
-
-};
-
-const RequestAge = (imageUri, setModuleAvailable, sendResults, ip) => {
-    url = "http://"+ ip +":5000/api/v1/demo/age";
-
-    formData = makeFormData(imageUri);
-    
-    axios.post(url, formData)
-        .then(function (response) {
-            console.log('RESPONSE::REQUEST-AGE: ', response);
-            if (response.data.success == true){
-                sendResults(ENUM_MODULE_NAMES.age, response.data.faces[0].result, response.data.faces[0].confidence, response.data.process.total);
-            }
-            else{
-                sendResults(ENUM_MODULE_NAMES.age, "face lost!!", "-1", '-1');
-            }
-        })
-        .catch(function (error) {
-            console.log('ERROR::REQUEST-AGE: ', error);
-        })
-        .then(function () {
-            console.log('END::REQUEST-AGE');
-            setModuleAvailable(ENUM_MODULE_STATUS.age);
-        });
-
-};
-
-
-
-const RequestFaceAdd = (imageUri, setModuleAvailable, sendResults, ip) => {
-    url = "http://"+ ip +":5000/api/v1/demo/face_add";
-
-    file = {
-        uri: imageUri,
-        name: "image.jpg",
-        type: "image/jpg"
-    };
-
-    const body = new FormData();
-    body.append('file', file);
-
-    axios.post(url, body)
-        .then(function (response) {
-            console.log('RESPONSE::REQUEST-ADD_FACE: ', response);
-            if (response.data.success == true){
-                //sendResults(response.data.faces[0].result, response.data.faces[0].confidence, response.data.process.total);
-            }
-            else{
-//                sendResults("face lost!!", "-1");
-            }
-        })
-        .catch(function (error) {
-            console.log('ERROR::REQUEST-ADD_FACE: ', error);
-        })
-        .then(function () {
-            console.log('END::REQUEST-ADD_FACE');
-  //          setModuleAvailable();
-        });
-
-};
-
-const RequestFace = (imageUri, setModuleAvailable, sendResults, ip) => {
-    url = "http://"+ ip +":5000/api/v1/demo/face";
-
-    file = {
-        uri: imageUri,
-        name: "image.jpg",
-        type: "image/jpg"
-    };
-
-    const body = new FormData();
-    body.append('file', file);
-
-    axios.post(url, body)
-        .then(function (response) {
-            console.log('RESPONSE::REQUEST-FACE: ', response);
-            if (response.data.success == true){
-                sendResults(ENUM_MODULE_NAMES.face, response.data.faces[0].result, response.data.faces[0].confidence, response.data.process.total);
-            }
-            else{
-                sendResults(ENUM_MODULE_NAMES.face, "face lost!!", "-1", '-1');
-            }
-        })
-        .catch(function (error) {
-            console.log('ERROR::REQUEST-FACE: ', error);
-        })
-        .then(function () {
-            console.log('END::REQUEST-FACE');
-            setModuleAvailable(ENUM_MODULE_STATUS.face);
-        });
-
-};
-
 
 const PostImage = (imageUri) => {
     baseURL = 'http://10.0.2.2:5000/api/v1/demo';
-//    baseURL = 'http://192.168.43.143:5000/api/v1/demo';
+    //baseURL = 'http://192.168.43.143:5000/api/v1/demo';
 
-    file = {
-        uri: imageUri,
-        name: "image.jpg",
-        type: "image/jpg"
-    };
+    formData = makeFormData(imageUri);
 
-    const body = new FormData();
-    body.append('file', file);
-
-    axios.post(baseURL, body)
+    axios.post(baseURL, formData)
         .then(function (response) {
-            console.log('basarili: ', response);
+            console.log('[PostImage]:: SUCCESS: ', response);
         })
         .catch(function (error) {
-            console.log('hata oldu: ', error);
+            console.log('[PostImage]:: FAILED: ', error);
         })
         .then(function () {
             console.log('<-------------------------->');
         });
-
-    
-    /*
-
-      fetch(baseURL, {
-      method: 'POST',
-      body
-      }).then(function(res){ console.log(res); });
-    */
-
 };
 
-export { RequestEmotion, RequestGender, RequestAge, RequestFace, RequestFaceAdd, PostImage }
-
+export default ENUM_MODULE_NAMES;
+export { RequestModule, PostImage }

@@ -1,7 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Slider, Button, TextInput } from 'react-native';
 import { RNCamera } from 'react-native-camera';
-import { PostImage, RequestEmotion, RequestGender, RequestAge, RequestFaceAdd, RequestFace } from './api/request';
+import { PostImage, RequestModule } from './api/request';
+import ENUM_MODULE_NAMES from './api/request';
 import ModuleCard from './moduleCard.js';
 import SettingsScreen from './pages/setting.js';
 
@@ -21,9 +22,14 @@ const labelStatus = {
     TRAINING: 2
 };
 
-class CameraScreen extends React.Component {
-    
+const MODULE_TYPE = {
+    age: 'age',
+    emotion: 'emotion',
+    face: 'face',
+    gender: 'gender'
+};
 
+class CameraScreen extends React.Component {
     state = {
         autoFocus: 'on',
         depth: 0,
@@ -62,16 +68,17 @@ class CameraScreen extends React.Component {
         faceProcessTime: '-1',
         labelCurrentStatus: labelStatus.AVAILABLE,
         btnLabelText: 'label',
+        btnEngineText: 'START',
         temp: false,
         text: ''
     };
 
     componentDidUpdate() {
-        this.cyclens();
-//        console.log(this.state.faces);
+        this.LOOP();
+        //console.log(this.state.faces);
     }
 
-    cyclens = async () => {
+    LOOP = async () => {
 
         if (this.state.isCyclensActive
             && this.state.emotionStatus === moduleStatus.AVAILABLE
@@ -85,12 +92,12 @@ class CameraScreen extends React.Component {
             this.setState({faceStatus: moduleStatus.WAITING});
             if (this.camera) {
                 this.camera.takePictureAsync().then(frame => {
-                    RequestEmotion(frame.uri, this.changeStatus2Available, this.changeRes, this.state.ipAdress);
-                    RequestGender(frame.uri, this.changeStatus2Available, this.changeRes, this.state.ipAdress);
-                    RequestAge(frame.uri, this.changeStatus2Available, this.changeRes, this.state.ipAdress);
-                    RequestFace(frame.uri, this.changeStatus2Available, this.changeRes, this.state.ipAdress);
+                    RequestModule(ENUM_MODULE_NAMES.age, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
+                    RequestModule(ENUM_MODULE_NAMES.emotion, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
+                    RequestModule(ENUM_MODULE_NAMES.face, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
+                    RequestModule(ENUM_MODULE_NAMES.gender, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
                     if (this.state.labelCurrentStatus === labelStatus.LEARNING) {
-                        RequestFaceAdd(frame.uri);
+                        RequestModule(ENUM_MODULE_NAMES.face_add, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
                     };
                 });
             }
@@ -102,8 +109,6 @@ class CameraScreen extends React.Component {
         this.setState({[module]: moduleStatus.AVAILABLE});
     }
 
-
-    
     changeRes = ( moduleName , res, conf, processTime ) => {
         var result = moduleName + 'Result';
         var confidence = moduleName + 'Confidence';
@@ -138,20 +143,6 @@ class CameraScreen extends React.Component {
         });
     }
 
-    takePicture = async function() {
-        if (this.camera) {
-            this.camera.takePictureAsync().then(frame => {
-                const URL = 'http://10.0.2.2:5000/api/v1/demo';
-
-                console.log('-------------------------------------------------------------');
-                //PostImage(frame.uri);
-                RequestEmotion(frame.uri, this.changeModuleStatus2Avaliable);
-
-            });
-        }            
-    }
-
-        
     onFacesDetected = ({ faces }) => this.setState({ faces });
     onFaceDetectionError = state => console.warn('Faces detection error:', state);
 
@@ -211,7 +202,6 @@ class CameraScreen extends React.Component {
               permissionDialogTitle={'Permission to use camera'}
               permissionDialogMessage={'We need your permission to use your camera phone'}
             >
-              
               {this.renderFaces()}
               <View
                 style={{
@@ -230,19 +220,17 @@ class CameraScreen extends React.Component {
             this.setState({labelCurrentStatus: labelStatus.LEARNING});
             this.setState({btnLabelText: 'learning...'});
         }
-        else if (this.state.labelCurrentStatus === labelStatus.LEARNING) {            
+        else if (this.state.labelCurrentStatus === labelStatus.LEARNING) {
             this.setState({labelCurrentStatus: labelStatus.AVAILABLE});
             this.setState({btnLabelText: 'label'});
         }
     };
 
     mainScreen = () => (
-        
             <View style={styles.container}>
-              
 
-              <View style={{justifyContent: 'space-between'}}>
-                <Button color='#00000010' title='start' onPress={this.onCyclensToggle}/>
+              <View style={styles.buttonContainer}>
+                <Button color='#00000010' title={this.state.btnEngineText} onPress={this.onCyclensToggle}/>
                 <Button color='#00000010' title='toggle' onPress={this.toggleFacing.bind(this)}/>
                 <Button color='#00000010' title={this.state.btnLabelText} onPress={this.onButtonLabelPressed}/>
                 <Button color='#00000010' title='settings' onPress={this.onGoBackPressed}/>
@@ -269,9 +257,7 @@ class CameraScreen extends React.Component {
                   processTime={this.state.ageProcessTime}
                 />
               </View>
-              
             </View>
-        
     );
 
     onGoBackPressed = () => {
@@ -288,16 +274,24 @@ class CameraScreen extends React.Component {
     }
 
     onCyclensToggle = () => {
-        this.setState({isCyclensActive: !this.state.isCyclensActive});
+        if(this.state.isCyclensActive){
+            this.setState({isCyclensActive: false});
+            this.setState({btnEngineText: 'START'});
+        } else  {
+            this.setState({isCyclensActive: true});
+            this.setState({btnEngineText: 'STOP'});
+        }
     }
-    
+
     render() {
         const page = this.state.isSettings
-              ? <SettingsScreen onChangeIpPress={this.onChangeIpPress} onGoBackPressed={this.onGoBackPressed}/>//this.settingss()
+              ? <SettingsScreen onButtonChangeIpPressed ={this.onChangeIpPress} onGoBackPressed={this.onGoBackPressed}/>//this.settingss()
               : this.mainScreen();
         return <View style={styles.container}>{page}</View>;
     };
 };
+
+const getIpAddress = () => {return this.state.ipAdress;};
 
 const styles = StyleSheet.create({
     container: {
@@ -306,8 +300,10 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         backgroundColor: '#000',
     },
+    buttonContainer: {
+        justifyContent: 'space-between'
+    },
     moduleContainer: {
-        
     },
     cameraLayout: {
         flex: 1,
