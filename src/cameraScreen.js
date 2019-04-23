@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Slider, Button, TextInput } from 'react-native';
 import { RNCamera } from 'react-native-camera';
-import { PostImage, RequestPing, RequestModule } from './api/request';
+import { PostImage, RequestPing, RequestModule, RequestFace } from './api/request';
 import ENUM_MODULE_NAMES from './api/request';
 import ModuleCard from './moduleCard.js';
 import SettingsScreen from './pages/setting.js';
@@ -63,7 +63,7 @@ class CameraScreen extends React.Component {
         ageConfidence: '-1',
         ageProcessTime: '-1',
         faceStatus: moduleStatus.AVAILABLE,
-        faceResult: 'empty',
+        faceResult: '',
         faceConfidence: '-1',
         faceProcessTime: '-1',
         labelCurrentStatus: labelStatus.AVAILABLE,
@@ -112,15 +112,14 @@ class CameraScreen extends React.Component {
                 this.camera.takePictureAsync().then(frame => {
                     RequestModule(ENUM_MODULE_NAMES.age, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
                     RequestModule(ENUM_MODULE_NAMES.emotion, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
-                    RequestModule(ENUM_MODULE_NAMES.face, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
                     RequestModule(ENUM_MODULE_NAMES.gender, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
+                    RequestFace(ENUM_MODULE_NAMES.face, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
                     if (this.state.labelCurrentStatus === labelStatus.LEARNING) {
                         RequestModule(ENUM_MODULE_NAMES.face_add, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
                     };
                 });
             }
         }
-
     }
 
     changeStatus2Available = ( module ) => {
@@ -169,6 +168,7 @@ class CameraScreen extends React.Component {
     onFaceDetectionError = state => console.warn('Faces detection error:', state);
 
     renderFace = ({ bounds, faceID }) => {
+        bounds.size.width = bounds.size.width + 100;
         return (
             <View
               key={faceID}
@@ -179,12 +179,12 @@ class CameraScreen extends React.Component {
                   styles.face,
                   {
                       ...bounds.size,
-                      left: bounds.origin.x,
+                      left: bounds.origin.x - 50,
                       top: bounds.origin.y,
                   },
               ]}
             >
-              <Text style={styles.faceText}>ID: {this.state.faceResult}</Text>
+              <Text style={styles.faceText}>{this.state.faceResult}</Text>
               {
               //  <Text style={styles.faceText}>confidence: {this.state.faceConfidence}</Text>
               //  <Text style={styles.faceText}>process ms: {this.state.faceProcessTime}</Text>
@@ -376,9 +376,9 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderRadius: 1,
         position: 'absolute',
-        borderColor: '#ffffff',
+        borderColor: '#ffffff00',
         justifyContent: 'flex-start',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0)',
     },
     faceText: {
@@ -386,6 +386,9 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         textAlign: 'center',
         margin: 5,
+        paddingHorizontal: 15,
+        paddingVertical: 3,
+        //backgroundColor: '#3a0f8477',
         backgroundColor: 'transparent',
     },
 });

@@ -113,6 +113,36 @@ const RequestModule = (moduleType, ip, imageUri, setModuleAvailable, sendResults
         });
 };
 
+
+
+
+
+const RequestFace = (moduleType, ip, imageUri, setModuleAvailable, sendResults) => {
+    URL = "http://" + ip + ":5001";
+
+    if (URL === null) {
+        return;
+    }
+
+    formData = makeFormData(imageUri);
+
+    axios.post(URL, formData)
+        .then(function (response) {
+            console.log('[RequestModule::RESPONSE]: Type: ', moduleType, 'Result: ', response);
+            sendResults(moduleType, response.data.faces[0].result, '', '');
+        })
+        .catch(function (error) {
+            console.log('[RequestModule::RESPONSE]: Type: ', moduleType, 'Result: ', error);
+        })
+        .then(function () {
+            console.log('[RequestModule::RESPONSE]: Type: ', moduleType, 'Result: END');
+            setModuleAvailable(getModuleStatusForType(moduleType));
+        });
+};
+
+
+
+
 const PostImage = (imageUri) => {
     baseURL = 'http://10.0.2.2:5000/api/v1/demo';
     //baseURL = 'http://192.168.43.143:5000/api/v1/demo';
@@ -132,4 +162,4 @@ const PostImage = (imageUri) => {
 };
 
 export default ENUM_MODULE_NAMES;
-export { RequestModule, RequestPing, PostImage }
+export { RequestModule, RequestPing, PostImage, RequestFace }
