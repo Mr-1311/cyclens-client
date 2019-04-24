@@ -1,7 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Slider, Button, TextInput } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Slider, Button, TextInput, Modal, Alert } from 'react-native';
 import { RNCamera } from 'react-native-camera';
-import { PostImage, RequestPing, RequestModule, RequestFace } from './api/request';
+import { PostImage, RequestPing, RequestModule, RequestFace, RequestAll } from './api/request';
 import ENUM_MODULE_NAMES from './api/request';
 import ModuleCard from './moduleCard.js';
 import SettingsScreen from './pages/setting.js';
@@ -23,6 +23,7 @@ const labelStatus = {
 };
 
 const MODULE_TYPE = {
+    all: 'all',
     age: 'age',
     emotion: 'emotion',
     face: 'face',
@@ -50,6 +51,11 @@ class CameraScreen extends React.Component {
         isCyclensActive: false,
         isSettings: false,
         ipAdress: '0.0.0.0',
+        urlParams: '',
+        allStatus: moduleStatus.AVAILABLE,
+        allResult: 'empty',
+        allConfidence: '-1',
+        allProcessTime: '-1',
         emotionStatus: moduleStatus.AVAILABLE,
         emotionResult: 'empty',
         emotionConfidence: '-1',
@@ -71,6 +77,8 @@ class CameraScreen extends React.Component {
         btnEngineText: 'WAITING',
         btnEngineDisabled: false,
         serverPing: false,
+        modalVisible: false,
+        name: '',
         temp: false,
         text: ''
     };
@@ -98,22 +106,12 @@ class CameraScreen extends React.Component {
     LOOP = async () => {
 
         if (this.state.isCyclensActive
-            && this.state.serverPing === true
-            && this.state.emotionStatus === moduleStatus.AVAILABLE
-            && this.state.genderStatus === moduleStatus.AVAILABLE
-            && this.state.ageStatus === moduleStatus.AVAILABLE
-            && this.state.faceStatus === moduleStatus.AVAILABLE)
+            && this.state.allStatus === moduleStatus.AVAILABLE)
         {
-            this.setState({emotionStatus: moduleStatus.WAITING});
-            this.setState({genderStatus: moduleStatus.WAITING});
-            this.setState({ageStatus: moduleStatus.WAITING});
-            this.setState({faceStatus: moduleStatus.WAITING});
+            this.setState({allStatus: moduleStatus.WAITING});
             if (this.camera) {
                 this.camera.takePictureAsync().then(frame => {
-                    RequestModule(ENUM_MODULE_NAMES.age, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
-                    RequestModule(ENUM_MODULE_NAMES.emotion, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
-                    RequestModule(ENUM_MODULE_NAMES.gender, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
-                    RequestFace(ENUM_MODULE_NAMES.face, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
+                    RequestAll(ENUM_MODULE_NAMES.all, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes, this.state.urlParams);
                     if (this.state.labelCurrentStatus === labelStatus.LEARNING) {
                         RequestModule(ENUM_MODULE_NAMES.face_add, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
                     };
@@ -243,9 +241,26 @@ class CameraScreen extends React.Component {
             this.setState({btnLabelText: 'learning...'});
         }
         else if (this.state.labelCurrentStatus === labelStatus.LEARNING) {
-            this.setState({labelCurrentStatus: labelStatus.AVAILABLE});
-            this.setState({btnLabelText: 'label'});
+            this.setState({labelCurrentStatus: labelStatus.TRAINING});
+            this.setState({btnLabelText: 'train'});
+            this.setState({modalVisible: true});
         }
+    };
+
+    onModalButtonPressed = () => {
+        this.setState({labelCurrentStatus: labelStatus.AVAILABLE});
+        this.setState({btnLabelText: 'label'});
+        this.setState({modalVisible: false});
+    }
+
+    send = () => {
+        if (this.camera) {
+                this.camera.takePictureAsync().then(frame => {
+//                    RequestFace(ENUM_MODULE_NAMES.face, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
+                    RequestAll(ENUM_MODULE_NAMES.all, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes, this.state.urlParams);
+                });
+            }
+        console.log('sendingggggggggggggggggggggggggggggggggg');
     };
 
     mainScreen = () => (
@@ -256,9 +271,29 @@ class CameraScreen extends React.Component {
                 <Button color='#00000010' title='toggle' onPress={this.toggleFacing.bind(this)}/>
                 <Button color='#00000010' title={this.state.btnLabelText} onPress={this.onButtonLabelPressed}/>
                 <Button color='#00000010' title='settings' onPress={this.onGoBackPressed}/>
+                <Button color='#00000010' title='send' onPress={this.send}/>
               </View>
 
               {this.renderCamera()}
+
+              <Modal
+                animationType="fade"
+                transparent={true}
+                visible={this.state.modalVisible}
+                onRequestClose={() => {
+                    Alert.alert('Modal has been closed.');
+                }}>
+                <View style={styles.modal}>
+                  <Text>Set Name!</Text>
+                  <TextInput
+                    style={{height: 40, width: 300, borderColor: 'black', borderWidth: 1, marginVertical: 30}}
+                    placeholder='Name'
+                    onChangeText={(text) => this.setState({name: text})}
+                    value={this.state.name}
+                  />
+                  <Button color='#2983ad' title='Set Name' onPress={this.onModalButtonPressed}/>
+                </View>
+              </Modal>
 
               <View style={styles.moduleContainer}>
                 <ModuleCard
@@ -289,15 +324,20 @@ class CameraScreen extends React.Component {
         this.setState({genderStatus: moduleStatus.AVAILABLE});
         this.setState({ageStatus: moduleStatus.AVAILABLE});
         this.setState({faceStatus: moduleStatus.AVAILABLE});
+        this.setState({allStatus: moduleStatus.AVAILABLE});
     }
 
     onChangeIpPress = (ip) => {
         this.setState({ipAdress: ip});
     }
 
+    setUrlParams = (params) => {
+        this.setState({urlParams: params});
+    }
+
     onCyclensToggle = () => {
         if(!this.state.serverPing){
-            return;
+            //return;
         }
 
         if(this.state.isCyclensActive){
@@ -311,7 +351,7 @@ class CameraScreen extends React.Component {
 
     render() {
         const page = this.state.isSettings
-              ? <SettingsScreen onButtonChangeIpPressed ={this.onChangeIpPress} onGoBackPressed={this.onGoBackPressed}/>//this.settingss()
+              ? <SettingsScreen onButtonChangeIpPressed ={this.onChangeIpPress} onGoBackPressed={this.onGoBackPressed} setUrlParams={this.setUrlParams}/>//this.settingss()
               : this.mainScreen();
         return <View style={styles.container}>{page}</View>;
     };
@@ -391,6 +431,14 @@ const styles = StyleSheet.create({
         //backgroundColor: '#3a0f8477',
         backgroundColor: 'transparent',
     },
+    modal: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        margin: 100,
+        padding: 20,
+        borderRadius: 10,
+        backgroundColor: '#3ba0ceaa'
+    }
 });
 
 export default CameraScreen;

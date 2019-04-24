@@ -4,6 +4,7 @@ import axios from 'axios';
 import API_PATH from './routes';
 
 const ENUM_MODULE_NAMES = {
+    all: 'all',
     age: 'age',
     emotion: 'emotion',
     face: 'face',
@@ -11,7 +12,16 @@ const ENUM_MODULE_NAMES = {
     gender: 'gender'
 };
 
+const ENUM_CONVERT_MODULE_NAMES = {
+    action_recognition: 'null',
+    age_prediction: ENUM_MODULE_NAMES.age,
+    emotion_recognition: ENUM_MODULE_NAMES.emotion,
+    face_recognition: ENUM_MODULE_NAMES.face,
+    gender_prediction: ENUM_MODULE_NAMES.gender
+};
+
 const ENUM_MODULE_STATUS = {
+    all: 'allStatus',
     age: 'ageStatus',
     emotion: 'emotionStatus',
     face: 'faceStatus',
@@ -28,13 +38,15 @@ let makeFormData = (imageUri) => {
 
     const body = new FormData();
     body.append('file', file);
-
+    
     return body;
 };
 
 let getModuleStatusForType = (type) => {
     if (type === ENUM_MODULE_NAMES.age){
         return ENUM_MODULE_STATUS.age;
+    } else if (type === ENUM_MODULE_NAMES.all){
+        return ENUM_MODULE_STATUS.all;
     } else if (type === ENUM_MODULE_NAMES.emotion){
         return ENUM_MODULE_STATUS.emotion;
     } else if (type === ENUM_MODULE_NAMES.face){
@@ -50,6 +62,8 @@ let getModuleStatusForType = (type) => {
 getModuleApiPathForType = (type) => {
     if (type === ENUM_MODULE_NAMES.ping){
         return API_PATH.PING;
+    } else if (type === ENUM_MODULE_NAMES.all){
+        return API_PATH.ALL;
     } else if (type === ENUM_MODULE_NAMES.age){
         return API_PATH.AGE;
     } else if (type === ENUM_MODULE_NAMES.emotion){
@@ -69,7 +83,7 @@ const RequestPing = (ip, sendPingResult) => {
 
     axios.get(URL)
         .then(function (response) {
-            console.log('[RequestPing::RESPONSE]: Result: ', response);
+            //console.log('[RequestPing::RESPONSE]: Result: ', response);
             if (response.data.result == 'pong'){
                 sendPingResult(true);
             }
@@ -78,10 +92,10 @@ const RequestPing = (ip, sendPingResult) => {
             }
         })
         .catch(function (error) {
-            console.log('[RequestPing::RESPONSE]: Result: ', error);
+            //console.log('[RequestPing::RESPONSE]: Result: ', error);
         })
         .then(function () {
-            console.log('[RequestPing::RESPONSE]: Result: END');
+            //console.log('[RequestPing::RESPONSE]: Result: END');
         });
 };
 
@@ -118,7 +132,7 @@ const RequestModule = (moduleType, ip, imageUri, setModuleAvailable, sendResults
 
 
 const RequestFace = (moduleType, ip, imageUri, setModuleAvailable, sendResults) => {
-    URL = "http://" + ip + ":5001";
+    URL = "http://10.0.2.2:5001?moduladi=true&moduladi2=false";
 
     if (URL === null) {
         return;
@@ -130,6 +144,47 @@ const RequestFace = (moduleType, ip, imageUri, setModuleAvailable, sendResults) 
         .then(function (response) {
             console.log('[RequestModule::RESPONSE]: Type: ', moduleType, 'Result: ', response);
             sendResults(moduleType, response.data.faces[0].result, '', '');
+        })
+        .catch(function (error) {
+            console.log('[RequestModule::RESPONSE]: Type: ', moduleType, 'Result: ', error);
+        })
+        .then(function () {
+            console.log('[RequestModule::RESPONSE]: Type: ', moduleType, 'Result: END');
+            setModuleAvailable(getModuleStatusForType(moduleType));
+        });
+};
+
+
+
+
+
+
+
+
+const RequestAll = (moduleType, ip, imageUri, setModuleAvailable, sendResults, params) => {
+    URL = "http://" + ip + ":5000" + this.getModuleApiPathForType(moduleType) + params;
+
+    if (URL === null) {
+        return;
+    }
+
+    formData = makeFormData(imageUri);
+
+    axios.post(URL, formData)
+        .then(function (response) {
+            console.log('[RequestModule::RESPONSE]: Type: ', moduleType, 'Result: ', response);
+
+            for (var i = 0; i < response.data.modules.length; i++) {
+                
+                module = response.data.modules[i];
+
+                if (module.success == true){
+                    sendResults(ENUM_CONVERT_MODULE_NAMES[module.module], module.faces[0].result, module.faces[0].confidence, response.data.process.total);
+                }
+                else{
+                    sendResults(ENUM_CONVERT_MODULE_NAMES[module.module], "Face Lost", "-1", '-1');                 
+                }
+            }
         })
         .catch(function (error) {
             console.log('[RequestModule::RESPONSE]: Type: ', moduleType, 'Result: ', error);
@@ -162,4 +217,4 @@ const PostImage = (imageUri) => {
 };
 
 export default ENUM_MODULE_NAMES;
-export { RequestModule, RequestPing, PostImage, RequestFace }
+export { RequestModule, RequestPing, PostImage, RequestFace, RequestAll }
