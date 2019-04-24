@@ -131,8 +131,18 @@ const RequestModule = (moduleType, ip, imageUri, setModuleAvailable, sendResults
 
 
 
-const RequestFace = (moduleType, ip, imageUri, setModuleAvailable, sendResults) => {
-    URL = "http://10.0.2.2:5001?moduladi=true&moduladi2=false";
+const RequestFaceAdd = (moduleType, ip, imageUri, setModuleAvailable, sendResults, params, name) => {
+    if (params !== '') {
+        params = '?id=' + params;
+    }
+    if (name !== '') {
+        name = '&name=' + name;
+        sendResults('isFaceAddReachedLimit', false);
+        sendResults('name', '');
+    }
+    
+    URL = "http://"+ ip +":5000" + this.getModuleApiPathForType(moduleType) + params + name;
+
 
     if (URL === null) {
         return;
@@ -143,7 +153,11 @@ const RequestFace = (moduleType, ip, imageUri, setModuleAvailable, sendResults) 
     axios.post(URL, formData)
         .then(function (response) {
             console.log('[RequestModule::RESPONSE]: Type: ', moduleType, 'Result: ', response);
-            sendResults(moduleType, response.data.faces[0].result, '', '');
+
+            if (response.data.id >= 0) {
+                sendResults('faceAddId', response.data.id);
+                sendResults('isFaceAddReachedLimit', response.data.limit);
+            }
         })
         .catch(function (error) {
             console.log('[RequestModule::RESPONSE]: Type: ', moduleType, 'Result: ', error);
@@ -155,9 +169,22 @@ const RequestFace = (moduleType, ip, imageUri, setModuleAvailable, sendResults) 
 };
 
 
+const RequestFaceTrain = () => {
+    
+    axios.get('/user?ID=12345')
+        .then(function (response) {
+            // handle success
+            console.log(response);
+        })
+        .catch(function (error) {
+            // handle error
+            console.log(error);
+        })
+        .then(function () {
+            // always executed
+        });
 
-
-
+} 
 
 
 
@@ -217,4 +244,4 @@ const PostImage = (imageUri) => {
 };
 
 export default ENUM_MODULE_NAMES;
-export { RequestModule, RequestPing, PostImage, RequestFace, RequestAll }
+export { RequestModule, RequestPing, PostImage, RequestFaceAdd, RequestAll }

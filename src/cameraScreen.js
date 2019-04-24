@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Slider, Button, TextInput, Modal, Alert } from 'react-native';
 import { RNCamera } from 'react-native-camera';
-import { PostImage, RequestPing, RequestModule, RequestFace, RequestAll } from './api/request';
+import { PostImage, RequestPing, RequestModule, RequestFaceAdd, RequestAll } from './api/request';
 import ENUM_MODULE_NAMES from './api/request';
 import ModuleCard from './moduleCard.js';
 import SettingsScreen from './pages/setting.js';
@@ -24,6 +24,7 @@ const labelStatus = {
 
 const MODULE_TYPE = {
     all: 'all',
+    face_add: 'face_add',
     age: 'age',
     emotion: 'emotion',
     face: 'face',
@@ -56,6 +57,10 @@ class CameraScreen extends React.Component {
         allResult: 'empty',
         allConfidence: '-1',
         allProcessTime: '-1',
+        faceAddStatus: moduleStatus.AVAILABLE,
+        faceAddResult: 'empty',
+        faceAddConfidence: '-1',
+        faceAddProcessTime: '-1',
         emotionStatus: moduleStatus.AVAILABLE,
         emotionResult: 'empty',
         emotionConfidence: '-1',
@@ -74,12 +79,14 @@ class CameraScreen extends React.Component {
         faceProcessTime: '-1',
         labelCurrentStatus: labelStatus.AVAILABLE,
         btnLabelText: 'label',
+        btnLabelCount: '',
         btnEngineText: 'WAITING',
         btnEngineDisabled: false,
         serverPing: false,
         modalVisible: false,
         name: '',
-        temp: false,
+        faceAddId: '',
+        isFaceAddReachedLimit: false,
         text: ''
     };
 
@@ -104,20 +111,34 @@ class CameraScreen extends React.Component {
     }
 
     LOOP = async () => {
-
-        if (this.state.isCyclensActive
-            && this.state.allStatus === moduleStatus.AVAILABLE)
-        {
+        if (this.state.labelCurrentStatus === labelStatus.LEARNING && this.state.faceAddStatus === moduleStatus.AVAILABLE) {
+            this.setState({faceAddStatus: moduleStatus.WAITING});
+            if (this.state.isFaceAddReachedLimit) {
+                this.setState({modalVisible: true});
+                this.setState({labelCurrentStatus: labelStatus.TRAINING});
+                this.setState({btnLabelText: 'train'});
+                
+            }
+            else if (this.camera) {
+                this.setState({btnLabelCount: this.state.btnLabelCount === '' ? 1 : this.state.btnLabelCount + 1});
+                this.camera.takePictureAsync().then(frame => {
+                    RequestFaceAdd(ENUM_MODULE_NAMES.face_add, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.faceAddChange, this.state.faceAddId, '');
+                });
+            };
+        }
+        else if (this.state.isCyclensActive && this.state.allStatus === moduleStatus.AVAILABLE) {
             this.setState({allStatus: moduleStatus.WAITING});
+            
             if (this.camera) {
                 this.camera.takePictureAsync().then(frame => {
                     RequestAll(ENUM_MODULE_NAMES.all, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes, this.state.urlParams);
-                    if (this.state.labelCurrentStatus === labelStatus.LEARNING) {
-                        RequestModule(ENUM_MODULE_NAMES.face_add, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
-                    };
                 });
             }
         }
+    }
+
+    faceAddChange = (name, value) => {
+        this.setState({[name]: value});        
     }
 
     changeStatus2Available = ( module ) => {
@@ -248,8 +269,15 @@ class CameraScreen extends React.Component {
     };
 
     onModalButtonPressed = () => {
+
+        if (this.camera) {
+            this.camera.takePictureAsync().then(frame => {
+                RequestFaceAdd(ENUM_MODULE_NAMES.face_add, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.faceAddChange, this.state.faceAddId, this.state.name);
+            });
+        };
         this.setState({labelCurrentStatus: labelStatus.AVAILABLE});
         this.setState({btnLabelText: 'label'});
+        this.setState({btnLabelCount: ''});
         this.setState({modalVisible: false});
     }
 
@@ -269,7 +297,7 @@ class CameraScreen extends React.Component {
               <View style={styles.buttonContainer}>
                 <Button color='#00000010' title={this.state.btnEngineText} onPress={this.onCyclensToggle}/>
                 <Button color='#00000010' title='toggle' onPress={this.toggleFacing.bind(this)}/>
-                <Button color='#00000010' title={this.state.btnLabelText} onPress={this.onButtonLabelPressed}/>
+                <Button color='#00000010' title={this.state.btnLabelText +" "+ this.state.btnLabelCount} onPress={this.onButtonLabelPressed}/>
                 <Button color='#00000010' title='settings' onPress={this.onGoBackPressed}/>
                 <Button color='#00000010' title='send' onPress={this.send}/>
               </View>
