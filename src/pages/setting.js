@@ -9,10 +9,10 @@ class SettingsScreen extends React.Component {
         ip: this.props.getIpAddress,
         btnChangeIpDisabled: true,
         isActionRecognitionOn: false,
-        isAgeRecognitionOn: true,
-        isEmotionRecognitionOn: true,
-        isFaceRecognitionOn: true,
-        isGenderRecognitionOn: true,
+        isAgeRecognitionOn: false,
+        isEmotionRecognitionOn: false,
+        isFaceRecognitionOn: false,
+        isGenderRecognitionOn: false,
     };
 
     onButtonChangeIpPressed = () => {
