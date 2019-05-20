@@ -136,7 +136,12 @@ const RequestFaceAdd = (moduleType, ip, imageUri, setModuleAvailable, sendResult
         params = '?id=' + params;
     }
     if (name !== '') {
-        name = '&name=' + name;
+        if (params === ''){
+            name = '?name=' + name;
+        }
+        else {
+            name = '&name=' + name;
+        }
         sendResults('isFaceAddReachedLimit', false);
         sendResults('name', '');
     }

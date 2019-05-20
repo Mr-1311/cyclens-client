@@ -87,6 +87,7 @@ class CameraScreen extends React.Component {
         name: '',
         faceAddId: '',
         isFaceAddReachedLimit: false,
+        faceAddImgUri: '',
         text: ''
     };
 
@@ -122,7 +123,10 @@ class CameraScreen extends React.Component {
             else if (this.camera) {
                 this.setState({btnLabelCount: this.state.btnLabelCount === '' ? 1 : this.state.btnLabelCount + 1});
                 this.camera.takePictureAsync().then(frame => {
-                    RequestFaceAdd(ENUM_MODULE_NAMES.face_add, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.faceAddChange, this.state.faceAddId, '');
+                    this.setState({isFaceAddReachedLimit: true});
+                    this.setState({faceAddImgUri: frame.uri});
+                    this.setState({modalVisible: true});
+                    //RequestFaceAdd(ENUM_MODULE_NAMES.face_add, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.faceAddChange, this.state.faceAddId, this.state.name);
                 });
             };
         }
@@ -264,17 +268,17 @@ class CameraScreen extends React.Component {
         else if (this.state.labelCurrentStatus === labelStatus.LEARNING) {
             this.setState({labelCurrentStatus: labelStatus.TRAINING});
             this.setState({btnLabelText: 'train'});
-            this.setState({modalVisible: true});
+            //this.setState({modalVisible: true});
         }
     };
 
     onModalButtonPressed = () => {
 
-        if (this.camera) {
-            this.camera.takePictureAsync().then(frame => {
-                RequestFaceAdd(ENUM_MODULE_NAMES.face_add, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.faceAddChange, this.state.faceAddId, this.state.name);
-            });
-        };
+        //if (this.camera) {
+        //    this.camera.takePictureAsync().then(frame => {
+        RequestFaceAdd(ENUM_MODULE_NAMES.face_add, this.state.ipAdress, this.state.faceAddImgUri, this.changeStatus2Available, this.faceAddChange, this.state.faceAddId, this.state.name);
+        //    });
+        //};
         this.setState({labelCurrentStatus: labelStatus.AVAILABLE});
         this.setState({btnLabelText: 'label'});
         this.setState({btnLabelCount: ''});
