@@ -88,7 +88,8 @@ class CameraScreen extends React.Component {
         faceAddId: '',
         isFaceAddReachedLimit: false,
         faceAddImgUri: '',
-        text: ''
+        text: '',
+        totalMS: 0.0
     };
 
     componentDidMount() {
@@ -151,6 +152,10 @@ class CameraScreen extends React.Component {
 
     changePing = ( result ) => {
         this.setState({serverPing: result});
+    }
+
+    changeTotalMS = ( ms ) => {
+        this.setState({totalMS: ms});
     }
 
     changeRes = ( moduleName , res, conf, processTime ) => {
@@ -286,67 +291,70 @@ class CameraScreen extends React.Component {
     }
 
     send = () => {
+        let now = new Date();
+        let end;
         if (this.camera) {
-                this.camera.takePictureAsync().then(frame => {
-//                    RequestFace(ENUM_MODULE_NAMES.face, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
-                    RequestAll(ENUM_MODULE_NAMES.all, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes, this.state.urlParams);
-                });
-            }
-        console.log('sendingggggggggggggggggggggggggggggggggg');
+            this.camera.takePictureAsync().then(frame => {
+                //                    RequestFace(ENUM_MODULE_NAMES.face, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
+                RequestAll(ENUM_MODULE_NAMES.all, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes, this.state.urlParams, now, this.changeTotalMS);
+       
+            });
+        }
     };
-
+    
     mainScreen = () => (
-            <View style={styles.container}>
+        <View style={styles.container}>
+          <View style={styles.buttonContainer}>
+            <Button color='#00000010' title={this.state.btnEngineText} onPress={this.onCyclensToggle}/>
+            <Button color='#00000010' title='toggle' onPress={this.toggleFacing.bind(this)}/>
+            <Button color='#00000010' title={this.state.btnLabelText +" "+ this.state.btnLabelCount} onPress={this.onButtonLabelPressed}/>
+            <Button color='#00000010' title='settings' onPress={this.onGoBackPressed}/>
+            <Button color='#00000010' title={(this.state.totalMS).toString()} onPress={this.send}/>
+          </View>
+          {this.renderCamera()}
 
-              <View style={styles.buttonContainer}>
-                <Button color='#00000010' title={this.state.btnEngineText} onPress={this.onCyclensToggle}/>
-                <Button color='#00000010' title='toggle' onPress={this.toggleFacing.bind(this)}/>
-                <Button color='#00000010' title={this.state.btnLabelText +" "+ this.state.btnLabelCount} onPress={this.onButtonLabelPressed}/>
-                <Button color='#00000010' title='settings' onPress={this.onGoBackPressed}/>
-                <Button color='#00000010' title='send' onPress={this.send}/>
-              </View>
-
-              {this.renderCamera()}
-
-              <Modal
-                animationType="fade"
-                transparent={true}
-                visible={this.state.modalVisible}
-                onRequestClose={() => {
-                    Alert.alert('Modal has been closed.');
-                }}>
-                <View style={styles.modal}>
-                  <Text>Set Name!</Text>
-                  <TextInput
-                    style={{height: 40, width: 300, borderColor: 'black', borderWidth: 1, marginVertical: 30}}
-                    placeholder='Name'
-                    onChangeText={(text) => this.setState({name: text})}
-                    value={this.state.name}
-                  />
-                  <Button color='#2983ad' title='Set Name' onPress={this.onModalButtonPressed}/>
-                </View>
-              </Modal>
-
-              <View style={styles.moduleContainer}>
-                <ModuleCard
-                  title="Emotion"
-                  result={this.state.emotionResult}
-                  confidence={this.state.emotionConfidence}
-                  processTime={this.state.emotionProcessTime}/>
-                <ModuleCard
-                  title="Gender"
-                  result={this.state.genderResult}
-                  confidence={this.state.genderConfidence}
-                  processTime={this.state.genderProcessTime}
-                />
-                <ModuleCard
-                  title="Age"
-                  result={this.state.ageResult}
-                  confidence={this.state.ageConfidence}
-                  processTime={this.state.ageProcessTime}
-                />
-              </View>
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={this.state.modalVisible}
+            onRequestClose={() => {
+                Alert.alert('Modal has been closed.');
+            }}>
+            <View style={styles.modal}>
+              <Text>Set Name!</Text>
+              <TextInput
+                style={{height: 40, width: 300, borderColor: 'black', borderWidth: 1, marginVertical: 30}}
+                placeholder='Name'
+                onChangeText={(text) => this.setState({name: text})}
+                value={this.state.name}
+              />
+              <Button color='#2983ad' title='Set Name' onPress={this.onModalButtonPressed}/>
             </View>
+          </Modal>
+
+          <View style={styles.moduleContainer}>
+            <ModuleCard
+              title="Emotion"
+              result={this.state.emotionResult}
+              confidence={this.state.emotionConfidence}
+              processTime={this.state.emotionProcessTime}/>
+            <ModuleCard
+              title="Gender"
+              result={this.state.genderResult}
+              confidence={this.state.genderConfidence}
+              processTime={this.state.genderProcessTime}
+            />
+            <ModuleCard
+              title="Age"
+              result={this.state.ageResult}
+              confidence={this.state.ageConfidence}
+              processTime={this.state.ageProcessTime}
+            />
+          </View>
+
+          
+          
+        </View>
     );
 
     onGoBackPressed = () => {

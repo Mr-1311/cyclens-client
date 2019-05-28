@@ -193,7 +193,7 @@ const RequestFaceTrain = () => {
 
 
 
-const RequestAll = (moduleType, ip, imageUri, setModuleAvailable, sendResults, params) => {
+const RequestAll = (moduleType, ip, imageUri, setModuleAvailable, sendResults, params, now, setTotalMS) => {
     URL = "http://" + ip + ":5000" + this.getModuleApiPathForType(moduleType) + params;
 
     if (URL === null) {
@@ -224,6 +224,9 @@ const RequestAll = (moduleType, ip, imageUri, setModuleAvailable, sendResults, p
         .then(function () {
             console.log('[RequestModule::RESPONSE]: Type: ', moduleType, 'Result: END');
             setModuleAvailable(getModuleStatusForType(moduleType));
+            end = new Date();
+            ms = end - now;
+            setTotalMS(ms);
         });
 };
 
