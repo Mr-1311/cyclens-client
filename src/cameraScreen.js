@@ -78,7 +78,7 @@ class CameraScreen extends React.Component {
         faceConfidence: '-1',
         faceProcessTime: '-1',
         labelCurrentStatus: labelStatus.AVAILABLE,
-        btnLabelText: 'label',
+        btnLabelText: 'WAITING',
         btnLabelCount: '',
         btnEngineText: 'WAITING',
         btnEngineDisabled: false,
@@ -97,6 +97,7 @@ class CameraScreen extends React.Component {
             RequestPing(this.state.ipAdress, this.changePing);
             if(!this.state.serverPing){
                 this.setState({btnEngineText: 'WAITING'});
+                this.setState({btnLabelText: 'WAITING'});
             } else {
                 if(this.state.isCyclensActive){
                     this.setState({btnEngineText: 'STOP'});
@@ -119,7 +120,6 @@ class CameraScreen extends React.Component {
                 this.setState({modalVisible: true});
                 this.setState({labelCurrentStatus: labelStatus.TRAINING});
                 this.setState({btnLabelText: 'train'});
-                
             }
             else if (this.camera) {
                 this.setState({btnLabelCount: this.state.btnLabelCount === '' ? 1 : this.state.btnLabelCount + 1});
@@ -133,7 +133,6 @@ class CameraScreen extends React.Component {
         }
         else if (this.state.isCyclensActive && this.state.allStatus === moduleStatus.AVAILABLE) {
             this.setState({allStatus: moduleStatus.WAITING});
-            
             if (this.camera) {
                 this.camera.takePictureAsync().then(frame => {
                     RequestAll(ENUM_MODULE_NAMES.all, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes, this.state.urlParams);
@@ -143,7 +142,7 @@ class CameraScreen extends React.Component {
     }
 
     faceAddChange = (name, value) => {
-        this.setState({[name]: value});        
+        this.setState({[name]: value});
     }
 
     changeStatus2Available = ( module ) => {
@@ -266,6 +265,10 @@ class CameraScreen extends React.Component {
 
 
     onButtonLabelPressed = () => {
+        if(!this.state.serverPing){
+            return;
+        }
+
         if (this.state.labelCurrentStatus === labelStatus.AVAILABLE) {
             this.setState({labelCurrentStatus: labelStatus.LEARNING});
             this.setState({btnLabelText: 'learning...'});
@@ -285,7 +288,7 @@ class CameraScreen extends React.Component {
         //    });
         //};
         this.setState({labelCurrentStatus: labelStatus.AVAILABLE});
-        this.setState({btnLabelText: 'label'});
+        this.setState({btnLabelText: 'LABEL'});
         this.setState({btnLabelCount: ''});
         this.setState({modalVisible: false});
     }
@@ -297,17 +300,14 @@ class CameraScreen extends React.Component {
             this.camera.takePictureAsync().then(frame => {
                 //                    RequestFace(ENUM_MODULE_NAMES.face, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
                 RequestAll(ENUM_MODULE_NAMES.all, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes, this.state.urlParams, now, this.changeTotalMS);
-       
             });
         }
     };
-    
     mainScreen = () => (
         <View style={styles.container}>
           <View style={styles.buttonContainer}>
             <Button color='#00000010' title={this.state.btnEngineText} onPress={this.onCyclensToggle}/>
             <Button color='#00000010' title='toggle' onPress={this.toggleFacing.bind(this)}/>
-            <Button color='#00000010' title={this.state.btnLabelText +" "+ this.state.btnLabelCount} onPress={this.onButtonLabelPressed}/>
             <Button color='#00000010' title='settings' onPress={this.onGoBackPressed}/>
             <Button color='#00000010' title={(this.state.totalMS).toString()} onPress={this.send}/>
           </View>
@@ -350,10 +350,9 @@ class CameraScreen extends React.Component {
               confidence={this.state.ageConfidence}
               processTime={this.state.ageProcessTime}
             />
+            <Button color='#00000010' title={this.state.btnLabelText +" "+ this.state.btnLabelCount} onPress={this.onButtonLabelPressed}/>
           </View>
 
-          
-          
         </View>
     );
 
@@ -377,7 +376,7 @@ class CameraScreen extends React.Component {
 
     onCyclensToggle = () => {
         if(!this.state.serverPing){
-            //return;
+            return;
         }
 
         if(this.state.isCyclensActive){
