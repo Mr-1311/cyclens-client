@@ -6,8 +6,8 @@ const ModuleCard = (props) => {
         <View style={ styles.container }>
           <Text style={ styles.title }>{props.title}</Text>
           <Text style={ styles.text }>{props.result}</Text>
-          <Text style={ styles.text }>confidence: {props.confidence}</Text>
-          <Text style={ styles.text }>process ms: {props.processTime}</Text>
+          <Text style={ styles.text }>{props.confidence} %</Text>
+          <Text style={ styles.text }>{props.processTime} MS</Text>
         </View>
     );
 };
@@ -15,11 +15,10 @@ const ModuleCard = (props) => {
 
 const styles = StyleSheet.create({
     container: {
-        //    flexDirection: 'col',
         backgroundColor: '#000000aa',
         justifyContent: 'flex-start',
-        alignItems: 'flex-end',
-        //alignSelf: 'stretch',
+        alignItems: 'center',
+        alignSelf: 'stretch',
         //width: '80%',
         margin: 5,
         padding: 5
@@ -27,11 +26,13 @@ const styles = StyleSheet.create({
     title: {
         color: '#09a55f',
         fontWeight: 'bold',
+        alignItems: 'center',
         fontSize: 20
     },
     text: {
         color: '#fff',
         fontWeight: 'normal',
+        alignItems: 'center',
         fontSize: 14
     }
 });

@@ -5,6 +5,7 @@ import { PostImage, RequestPing, RequestModule, RequestFaceAdd, RequestAll } fro
 import ENUM_MODULE_NAMES from './api/request';
 import ModuleCard from './moduleCard.js';
 import SettingsScreen from './pages/setting.js';
+import FullScreen from 'react-native-full-screen';
 
 import axios from 'axios';
 
@@ -31,8 +32,7 @@ const MODULE_TYPE = {
     gender: 'gender'
 };
 
-class CameraScreen extends React.Component {
-    state = {
+const initialState = {
         autoFocus: 'on',
         depth: 0,
         type: 'back',
@@ -54,34 +54,35 @@ class CameraScreen extends React.Component {
         ipAdress: '0.0.0.0',
         urlParams: '',
         allStatus: moduleStatus.AVAILABLE,
-        allResult: 'empty',
-        allConfidence: '-1',
-        allProcessTime: '-1',
+        allResult: '-',
+        allConfidence: '0',
+        allProcessTime: '0',
         faceAddStatus: moduleStatus.AVAILABLE,
-        faceAddResult: 'empty',
-        faceAddConfidence: '-1',
-        faceAddProcessTime: '-1',
+        faceAddResult: '-',
+        faceAddConfidence: '0',
+        faceAddProcessTime: '0',
         emotionStatus: moduleStatus.AVAILABLE,
-        emotionResult: 'empty',
-        emotionConfidence: '-1',
-        emotionProcessTime: '-1',
+        emotionResult: '-',
+        emotionConfidence: '0',
+        emotionProcessTime: '0',
         genderStatus: moduleStatus.AVAILABLE,
-        genderResult: 'empty',
-        genderConfidence: '-1',
-        genderProcessTime: '-1',
+        genderResult: '-',
+        genderConfidence: '0',
+        genderProcessTime: '0',
         ageStatus: moduleStatus.AVAILABLE,
-        ageResult: 'empty',
-        ageConfidence: '-1',
-        ageProcessTime: '-1',
+        ageResult: '-',
+        ageConfidence: '0',
+        ageProcessTime: '0',
         faceStatus: moduleStatus.AVAILABLE,
         faceResult: '',
-        faceConfidence: '-1',
-        faceProcessTime: '-1',
+        faceConfidence: '0',
+        faceProcessTime: '0',
         labelCurrentStatus: labelStatus.AVAILABLE,
         btnLabelText: 'WAITING',
         btnLabelCount: '',
         btnEngineText: 'WAITING',
         btnEngineDisabled: false,
+        btnLabelDisabled: false,
         serverPing: false,
         modalVisible: false,
         name: '',
@@ -90,7 +91,18 @@ class CameraScreen extends React.Component {
         faceAddImgUri: '',
         text: '',
         totalMS: 0.0
+};
+
+class CameraScreen extends React.Component {
+
+    static navigationOptions = {
+        header: null
     };
+
+    constructor(props) {
+        super(props)
+        this.state = initialState;
+    }
 
     componentDidMount() {
         setInterval(() => {
@@ -103,6 +115,7 @@ class CameraScreen extends React.Component {
                     this.setState({btnEngineText: 'STOP'});
                 } else  {
                     this.setState({btnEngineText: 'START'});
+                    this.setState({btnLabelText: 'LABEL'});
                 }
             }
         }, 3000);
@@ -119,7 +132,7 @@ class CameraScreen extends React.Component {
             if (this.state.isFaceAddReachedLimit) {
                 this.setState({modalVisible: true});
                 this.setState({labelCurrentStatus: labelStatus.TRAINING});
-                this.setState({btnLabelText: 'train'});
+                this.setState({btnLabelText: 'TRAIN'});
             }
             else if (this.camera) {
                 this.setState({btnLabelCount: this.state.btnLabelCount === '' ? 1 : this.state.btnLabelCount + 1});
@@ -133,9 +146,13 @@ class CameraScreen extends React.Component {
         }
         else if (this.state.isCyclensActive && this.state.allStatus === moduleStatus.AVAILABLE) {
             this.setState({allStatus: moduleStatus.WAITING});
+
+            let now = new Date();
+            let end;
+
             if (this.camera) {
                 this.camera.takePictureAsync().then(frame => {
-                    RequestAll(ENUM_MODULE_NAMES.all, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes, this.state.urlParams);
+                    RequestAll(ENUM_MODULE_NAMES.all, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes, this.state.urlParams, now, this.changeTotalMS);
                 });
             }
         }
@@ -158,13 +175,15 @@ class CameraScreen extends React.Component {
     }
 
     changeRes = ( moduleName , res, conf, processTime ) => {
-        var result = moduleName + 'Result';
-        var confidence = moduleName + 'Confidence';
-        var pTime = moduleName + 'ProcessTime';
-        console.log(result, '   ', confidence, '    ', pTime);
-        this.setState({[result]: res});
-        this.setState({[confidence]: conf});
-        this.setState({[pTime]: processTime});
+        if (this.state.allStatus === moduleStatus.WAITING) {
+            var result = moduleName + 'Result';
+            var confidence = moduleName + 'Confidence';
+            var pTime = moduleName + 'ProcessTime';
+            console.log(result, '   ', confidence, '    ', pTime);
+            this.setState({[result]: res});
+            this.setState({[confidence]: conf});
+            this.setState({[pTime]: processTime});
+        }
     }
 
     getRatios = async function() {
@@ -269,46 +288,93 @@ class CameraScreen extends React.Component {
             return;
         }
 
+        this.reset(false);
+
         if (this.state.labelCurrentStatus === labelStatus.AVAILABLE) {
             this.setState({labelCurrentStatus: labelStatus.LEARNING});
-            this.setState({btnLabelText: 'learning...'});
+            this.setState({btnLabelText: 'LEARNING'});
         }
         else if (this.state.labelCurrentStatus === labelStatus.LEARNING) {
             this.setState({labelCurrentStatus: labelStatus.TRAINING});
-            this.setState({btnLabelText: 'train'});
+            this.setState({btnLabelText: 'TRAIN'});
             //this.setState({modalVisible: true});
         }
     };
 
     onModalButtonPressed = () => {
+        if(this.state.name === '') {
+            return
+        }
 
-        //if (this.camera) {
-        //    this.camera.takePictureAsync().then(frame => {
-        RequestFaceAdd(ENUM_MODULE_NAMES.face_add, this.state.ipAdress, this.state.faceAddImgUri, this.changeStatus2Available, this.faceAddChange, this.state.faceAddId, this.state.name);
-        //    });
-        //};
+        if (this.camera) {
+            this.camera.takePictureAsync().then(frame => {
+                RequestFaceAdd(ENUM_MODULE_NAMES.face_add, this.state.ipAdress, this.state.faceAddImgUri, this.changeStatus2Available, this.faceAddChange, this.state.faceAddId, this.state.name);
+            });
+        };
+
         this.setState({labelCurrentStatus: labelStatus.AVAILABLE});
         this.setState({btnLabelText: 'LABEL'});
         this.setState({btnLabelCount: ''});
+        this.setState({name: ''});
         this.setState({modalVisible: false});
     }
 
     send = () => {
+        this.reset(false);
+
         let now = new Date();
         let end;
         if (this.camera) {
             this.camera.takePictureAsync().then(frame => {
-                //                    RequestFace(ENUM_MODULE_NAMES.face, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes);
                 RequestAll(ENUM_MODULE_NAMES.all, this.state.ipAdress, frame.uri, this.changeStatus2Available, this.changeRes, this.state.urlParams, now, this.changeTotalMS);
             });
         }
     };
+
+    reset = (hard) => {
+        if(hard) {
+            this.setState(initialState);
+        } else {
+            this.setState({allStatus: moduleStatus.AVAILABLE});
+            this.setState({allResult: '-'});
+            this.setState({allConfidence: '0',});
+            this.setState({allProcessTime: '0'});
+            this.setState({faceAddStatus: moduleStatus.AVAILABLE});
+            this.setState({faceAddResult: '-'});
+            this.setState({faceAddConfidence: '0'});
+            this.setState({faceAddProcessTime: '0'});
+            this.setState({emotionStatus: moduleStatus.AVAILABLE});
+            this.setState({emotionResult: '-'});
+            this.setState({emotionConfidence: '0'});
+            this.setState({emotionProcessTime: '0',});
+            this.setState({genderStatus: moduleStatus.AVAILABLE});
+            this.setState({genderResult: '-'});
+            this.setState({genderConfidence: '0'});
+            this.setState({genderProcessTime: '0'});
+            this.setState({ageStatus: moduleStatus.AVAILABLE});
+            this.setState({ageResult: '-'});
+            this.setState({ageConfidence: '0'});
+            this.setState({ageProcessTime: '0'});
+            this.setState({faceStatus: moduleStatus.AVAILABLE});
+            this.setState({faceResult: ''});
+            this.setState({faceConfidence: '0'});
+            this.setState({faceProcessTime: '0'});
+            this.setState({labelCurrentStatus: labelStatus.AVAILABLE});
+            this.setState({btnLabelText: 'WAITING'});
+            this.setState({btnLabelCount: ''});
+            this.setState({btnEngineText: 'WAITING'});
+            this.setState({btnEngineDisabled: false});
+            this.setState({btnLabelDisabled: false});
+            this.setState({totalMS: 0});
+        }
+    };
+
     mainScreen = () => (
         <View style={styles.container}>
           <View style={styles.buttonContainer}>
             <Button color='#00000010' title={this.state.btnEngineText} onPress={this.onCyclensToggle}/>
-            <Button color='#00000010' title='toggle' onPress={this.toggleFacing.bind(this)}/>
-            <Button color='#00000010' title='settings' onPress={this.onGoBackPressed}/>
+            <Button color='#00000010' title='TOGGLE' onPress={this.toggleFacing.bind(this)}/>
+            <Button color='#00000010' title='SETTING' onPress={this.onGoBackPressed}/>
             <Button color='#00000010' title={(this.state.totalMS).toString()} onPress={this.send}/>
           </View>
           {this.renderCamera()}
@@ -321,36 +387,36 @@ class CameraScreen extends React.Component {
                 Alert.alert('Modal has been closed.');
             }}>
             <View style={styles.modal}>
-              <Text>Set Name!</Text>
+              <Text>SET!</Text>
               <TextInput
                 style={{height: 40, width: 300, borderColor: 'black', borderWidth: 1, marginVertical: 30}}
                 placeholder='Name'
                 onChangeText={(text) => this.setState({name: text})}
                 value={this.state.name}
               />
-              <Button color='#2983ad' title='Set Name' onPress={this.onModalButtonPressed}/>
+              <Button color='#2983ad' title='SET!' onPress={this.onModalButtonPressed}/>
             </View>
           </Modal>
 
           <View style={styles.moduleContainer}>
             <ModuleCard
-              title="Emotion"
+              title="EMOTION"
               result={this.state.emotionResult}
               confidence={this.state.emotionConfidence}
               processTime={this.state.emotionProcessTime}/>
             <ModuleCard
-              title="Gender"
+              title="GENDER"
               result={this.state.genderResult}
               confidence={this.state.genderConfidence}
               processTime={this.state.genderProcessTime}
             />
             <ModuleCard
-              title="Age"
+              title="AGE"
               result={this.state.ageResult}
               confidence={this.state.ageConfidence}
               processTime={this.state.ageProcessTime}
             />
-            <Button color='#00000010' title={this.state.btnLabelText +" "+ this.state.btnLabelCount} onPress={this.onButtonLabelPressed}/>
+            <Button color='#00000010' title={this.state.btnLabelText} onPress={this.onButtonLabelPressed}/>
           </View>
 
         </View>
@@ -378,6 +444,8 @@ class CameraScreen extends React.Component {
         if(!this.state.serverPing){
             return;
         }
+
+        this.reset(false);
 
         if(this.state.isCyclensActive){
             this.setState({isCyclensActive: false});

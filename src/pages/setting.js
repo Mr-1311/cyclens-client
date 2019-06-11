@@ -32,7 +32,7 @@ class SettingsScreen extends React.Component {
 
         this.props.setUrlParams(urlParams);
         this.props.onGoBackPressed();
-        
+
     }
 
     render() {
@@ -51,7 +51,7 @@ class SettingsScreen extends React.Component {
                   onPress={this.onButtonChangeIpPressed}
                 />
               </View>
-              
+
               <ScrollView>
 
                 <TouchableOpacity
@@ -118,7 +118,7 @@ class SettingsScreen extends React.Component {
                   <Text style={styles.moduleText}>Gender Prediction</Text>
                   <Text style={styles.moduleText}>{String(this.state.isGenderRecognitionOn)}</Text>
                 </TouchableOpacity>
-                
+
               </ScrollView>
 
               <Button
