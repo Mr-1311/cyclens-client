@@ -147,6 +147,7 @@ const RequestFaceAdd = (moduleType, ip, imageUri, setModuleAvailable, sendResult
     }
     
     URL = "http://"+ ip +":5000" + this.getModuleApiPathForType(moduleType) + params + name;
+    console.log('urlllllllllllllllllllllllllllllllllllll', URL);
 
 
     if (URL === null) {
@@ -158,7 +159,7 @@ const RequestFaceAdd = (moduleType, ip, imageUri, setModuleAvailable, sendResult
     axios.post(URL, formData)
         .then(function (response) {
             console.log('[RequestModule::RESPONSE]: Type: ', moduleType, 'Result: ', response);
-
+            
             if (response.data.id >= 0) {
                 sendResults('faceAddId', response.data.id);
                 sendResults('isFaceAddReachedLimit', response.data.limit);
