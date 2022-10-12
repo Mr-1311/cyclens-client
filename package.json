@@ -16,7 +16,7 @@
     "mobx": "^5.9.4",
     "mobx-react": "^5.4.3",
     "react": "16.6.1",
-    "react-native": "0.57.7",
+    "react-native": "0.70.2",
     "react-native-camera": "^1.4.3",
     "react-native-full-screen": "^0.0.2",
     "react-native-gesture-handler": "^1.3.0",
